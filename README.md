@@ -11,7 +11,7 @@
 ---
 
 ## 架构
-![](![](http://7xrgh9.com1.z0.glb.clouddn.com/17-2-20/77360174-file_1487569102103_b75c.png))
+![](http://7xrgh9.com1.z0.glb.clouddn.com/17-2-20/77360174-file_1487569102103_b75c.png)
 > cacher 0.3.0版本.
 
 ---
