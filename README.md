@@ -28,7 +28,7 @@
 ---
 ### 0.1.X
 - 0.1.3
-    - 重构为cacher
+    - 重构为Cacher
         - 开放`com.vdian.cacher.ICache`接口以支持更多的缓存服务(如Memcached、Redis、Guava、`ConcurrentHashMap`...).
         - 不再强依赖某一特定缓存产品, 而是作为`ICache`接口的一个具体实现.
     - 添加GuavaCache作为本地Cache默认实现
@@ -61,7 +61,7 @@
     - RedisCache: 基于`Pipeline`实现带有超时时间的`mset`命令, 提高性能.
 - 0.3.2
     - fix `VdianRedisCluster`不支持多于100个key 读写的bug
-    - 使用`ConcurrentHashMap`替换Commons-Pool2师兄ICachePool, 并对其进行代理(commons-proxy), 同样可以实现在指定缓存产品配错的情况下给出提示的功能.
+    - 使用`ConcurrentHashMap`替换Commons-Pool2实现的ICachePool, 并对其进行代理(commons-proxy), 同样可以实现在指定缓存产品配错的情况下给出提示的功能.
 - 0.3.3
     - fix Single Cache clean bug
 
@@ -151,7 +151,7 @@ public List<User> getFromDBOrHttp(List<Integer> ids, String address) {
 
 方法大致的思路是首先根据批量id生成一堆key去查询缓存, 如果有部分未命中的, 则查询DB or HTTP ..., 然后再将这些未命中的内容写入缓存.
 
-> 如果说上面的这些傻瓜代码(步骤0、1、2、3、5)你还可以忍受的话(那我也是受不了你了(⊙﹏⊙)b), 那就再来点猛的: 如说公司的缓存策略换了, 大家发现开源界又出现了一个性能更好的缓存服务, 让你把上面的所有代码全部换成新的, 或者你师兄说DB/HTTP性能够用了, 我们不需要缓存了, 你得把上面的这些劳什子全部删掉... 这时候除了一句**WTF**之外你应该啥也说不出来吧. 综上所述, 前面的这种方式不光开发起来慢, 而且维护成本也高. 下面就到了我们的**cacher**上场的时候了.
+> 如果说上面的这些傻瓜代码(步骤0、1、2、3、5)你还可以忍受的话(那我也是受不了你了(⊙﹏⊙)b), 那就再来点猛的: 如说公司的缓存策略换了, 大家发现开源界又出现了一个性能更好的缓存服务, 让你把上面的所有代码全部换成新的, 或者你师兄说DB/HTTP性能够用了, 我们不需要缓存了, 你得把上面的这些劳什子全部删掉... 这时候除了一句**WTF**之外你应该啥也说不出来吧. 综上所述, 前面的这种方式不光开发起来慢, 而且维护成本也高. 下面就到了我们的**Cacher**上场的时候了.
 
 ---
 ## 入门
@@ -274,6 +274,7 @@ public List<User> getFromDBOrHttp(List<Integer> ids, String address) {
         1. 缓存命中率: 见下图片. 单缓存还会打印查询的`key`, 批量缓存会打印 `miss keys`;
         2. 缓存执行耗时: 打印缓存执行总耗时(包含查询缓存、执行方法、写入缓存的总耗时).
 ![](https://si.geilicdn.com/hz_img_05aa00000158dc87d50e0a02685e_2022_453_unadjust.png)
+
 > 可以看到在基于RedisPool的缓存中, 在命中率能够达到100%的情况下, 即使157个key, 也能做到在2ms内返回. 而单key则会在0ms内返回.
 
 ---
