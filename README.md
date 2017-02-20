@@ -6,7 +6,7 @@
 
 > - 服务于feedcenter的***redisCli-annotation***.
     - 每天提供200W+次Dubbo调用, 1700W+次缓存查询, 可以做到单次查询(get/mget)耗时 0~2ms(1~200个key).
-    - 0.2版本重新设计&开发, 不再与某一具体缓存服务绑定, 提供更灵活的配置、更快的读写效率.
+    - 0.1版本重新设计&开发, 不再与某一具体缓存服务绑定, 提供更灵活的配置、更快的读写效率.
 
 ---
 
@@ -22,8 +22,8 @@
     - feedcenter-push
     - feedcenter-admin
 - 文档
-    - [redis-annotation Wiki](http://gitlab.vdian.net/zhoupan/redisCli-annotation/wikis/home)
-    - [redis-annotation内部分享](http://gitlab.vdian.net/zhoupan/redisCli-annotation/wikis/redis-annotaion-share)
+    - [redis-annotation 文档](https://github.com/feiqing/Cacher/wiki/redisCli-annotation-%E6%96%87%E6%A1%A3)
+    - [redis-annotation 分享](https://github.com/feiqing/Cacher/wiki/redisCli-annotation-%E5%88%86%E4%BA%AB)
 
 ---
 ### 0.1.X
