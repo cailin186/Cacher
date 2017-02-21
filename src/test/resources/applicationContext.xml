@@ -80,11 +80,5 @@
         <constructor-arg name="ipPorts" value="10.1.101.60:11211"/>
     </bean>
 
-    <bean id="userService" class="com.vdian.cacher.service.impl.UserServiceImpl"/>
-
-    <bean id="noAnnotation" class="com.vdian.cacher.service.NoAnnotation"/>
-
-    <bean id="noAnnotation2" class="com.vdian.cacher.service.UseAnnotation"/>
-
-    <context:component-scan base-package="com.vdian.cacher.service"/>
+    <context:component-scan base-package="com.vdian.cacher.service.impl"/>
 </beans>

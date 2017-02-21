@@ -7,6 +7,7 @@ import com.vdian.cacher.Invalidate;
 import com.vdian.cacher.domain.User;
 import com.vdian.cacher.enums.Expire;
 import com.vdian.cacher.service.UserService;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 
@@ -14,6 +15,7 @@ import java.util.*;
  * @author jifang
  * @since 16/3/20 下午5:49.
  */
+@Component
 public class UserServiceImpl implements UserService {
 
     /**
