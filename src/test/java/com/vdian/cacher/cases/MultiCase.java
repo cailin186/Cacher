@@ -16,7 +16,7 @@ import java.util.Map;
  * @author jifang
  * @since 2016/11/30 下午2:19.
  */
-public class MultiTest extends TestBase {
+public class MultiCase extends TestBase {
 
     @Autowired
     private UserService service;
@@ -24,7 +24,7 @@ public class MultiTest extends TestBase {
     @Test
     public void testReturnMap() throws InterruptedException {
         List<Integer> ids = new LinkedList<>();
-        for (int i = 2000; i < 2100; ++i) {
+        for (int i = 1; i < 10; ++i) {
             ids.add(i);
         }
         Map<Integer, User> map = service.returnMap("name", ids, "ok");
@@ -32,8 +32,6 @@ public class MultiTest extends TestBase {
 
         map = service.returnMap("name", ids, "ok");
         System.out.println(map);
-
-        Thread.sleep(100000);
     }
 
     @Test

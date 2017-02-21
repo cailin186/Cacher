@@ -16,7 +16,7 @@ import java.util.*;
 @Component
 public class NoAnnotation implements Serializable {
 
-    //@Qualifier("ehCache")
+    @Qualifier("redisCache")
     @Autowired
     private ICache cache;
 
