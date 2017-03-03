@@ -12,7 +12,7 @@ import java.util.Map;
  * @author jifang
  * @since 16/7/21 上午11:34.
  */
-public class KeyComposeUtil {
+public class KeysCombineUtil {
 
     public static String toSingleKey(CacheKeyHolder holder, String separator, Object[] args) {
         String prefix = holder.getPrefix();

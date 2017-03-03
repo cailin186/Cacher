@@ -11,25 +11,25 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author jifang
  * @since 2017/3/1 下午5:55.
  */
-public class KeyPatternCache {
+public class KeyPatternsCombineUtil {
 
     private static final Map<HolderWithSeparatorMapKey, String> cache = new ConcurrentHashMap<>();
 
-    private static final String CACHE_KEY_PLACEHOLDER = "[]";
+    private static final String CACHE_KEY_PLACEHOLDER = "[ ]";
 
     public static String getKeyPattern(CacheKeyHolder holder, String separator) {
         HolderWithSeparatorMapKey key = new HolderWithSeparatorMapKey(holder, separator);
         String pattern = cache.get(key);
         if (Strings.isNullOrEmpty(pattern)) {
             // process
-            pattern = doCacheKeyPattern(holder, separator);
+            pattern = combineKeyPattern(holder, separator);
             cache.put(key, pattern);
         }
 
         return pattern;
     }
 
-    private static String doCacheKeyPattern(CacheKeyHolder holder, String separator) {
+    private static String combineKeyPattern(CacheKeyHolder holder, String separator) {
         String prefix = holder.getPrefix();
         Map<Integer, CacheKey> cacheKeyMap = holder.getCacheKeyMap();
 
@@ -48,7 +48,7 @@ public class KeyPatternCache {
         return sb.toString();
     }
 
-    static class HolderWithSeparatorMapKey {
+    private static class HolderWithSeparatorMapKey {
         private CacheKeyHolder holder;
 
         private String separator;

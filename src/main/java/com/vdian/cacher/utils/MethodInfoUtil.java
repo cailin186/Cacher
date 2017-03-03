@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author jifang
  * @since 16/7/20 上午11:49.
  */
-public class MethodInfoCache {
+public class MethodInfoUtil {
 
     private static final Map<Method, Pair<CacheKeyHolder, MethodInfoHolder>> ruleRetCache = new ConcurrentHashMap<>();
 

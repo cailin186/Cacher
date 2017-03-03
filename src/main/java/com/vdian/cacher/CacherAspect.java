@@ -4,8 +4,8 @@ import com.google.common.base.Preconditions;
 import com.vdian.cacher.domain.CacheKeyHolder;
 import com.vdian.cacher.domain.MethodInfoHolder;
 import com.vdian.cacher.domain.Pair;
-import com.vdian.cacher.jmx.HitRateRecordMXBean;
-import com.vdian.cacher.jmx.HitRateRecordMXBeanImpl;
+import com.vdian.cacher.jmx.RecordMXBean;
+import com.vdian.cacher.jmx.RecordMXBeanImpl;
 import com.vdian.cacher.manager.CacheManager;
 import com.vdian.cacher.reader.CacheReader;
 import com.vdian.cacher.reader.MultiCacheReader;
@@ -13,8 +13,8 @@ import com.vdian.cacher.reader.SingleCacheReader;
 import com.vdian.cacher.support.cache.NoOpCache;
 import com.vdian.cacher.utils.CacherSwitcher;
 import com.vdian.cacher.utils.CacherUtils;
-import com.vdian.cacher.utils.KeyComposeUtil;
-import com.vdian.cacher.utils.MethodInfoCache;
+import com.vdian.cacher.utils.KeysCombineUtil;
+import com.vdian.cacher.utils.MethodInfoUtil;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.After;
@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
@@ -51,6 +52,10 @@ public class CacherAspect {
 
     private volatile boolean open;
 
+    private volatile boolean jmxSupport;
+
+    private MBeanServer mBeanServer;
+
     public CacherAspect() {
         this(Collections.singletonMap(DEFAULT, (ICache) new NoOpCache()));
     }
@@ -60,22 +65,29 @@ public class CacherAspect {
     }
 
     public CacherAspect(Map<String, ICache> caches, boolean open) {
+        this(caches, open, true);
+    }
+
+    public CacherAspect(Map<String, ICache> caches, boolean open, boolean jmxSupport) {
         initCaches(caches);
         this.cacheManager = new CacheManager(caches);
         this.singleCacheReader = new SingleCacheReader(cacheManager);
         this.multiCacheReader = new MultiCacheReader(cacheManager);
         this.open = open;
+        this.jmxSupport = jmxSupport;
     }
 
     @PostConstruct
-    public void startUp()
+    public void setUp()
             throws MalformedObjectNameException,
             NotCompliantMBeanException,
             InstanceAlreadyExistsException,
             MBeanRegistrationException {
-        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-        HitRateRecordMXBean mxBean = new HitRateRecordMXBeanImpl();
-        mBeanServer.registerMBean(mxBean, new ObjectName("com.vdian.cacher:name=HitRate"));
+        if (this.jmxSupport) {
+            mBeanServer = ManagementFactory.getPlatformMBeanServer();
+            RecordMXBean mxBean = new RecordMXBeanImpl();
+            mBeanServer.registerMBean(mxBean, new ObjectName("com.vdian.cacher:name=HitRate"));
+        }
     }
 
     @Around("@annotation(com.vdian.cacher.Cached)")
@@ -87,7 +99,7 @@ public class CacherAspect {
         if (CacherSwitcher.isSwitchOn(open, cached, method, pjp.getArgs())) {
             long start = System.currentTimeMillis();
 
-            Pair<CacheKeyHolder, MethodInfoHolder> pair = MethodInfoCache.getMethodInfo(method);
+            Pair<CacheKeyHolder, MethodInfoHolder> pair = MethodInfoUtil.getMethodInfo(method);
             CacheKeyHolder cacheKeyHolder = pair.getLeft();
             MethodInfoHolder methodInfoHolder = pair.getRight();
 
@@ -112,18 +124,18 @@ public class CacherAspect {
 
         if (CacherSwitcher.isSwitchOn(open, invalidate, method, pjp.getArgs())) {
             long start = System.currentTimeMillis();
-            Pair<CacheKeyHolder, MethodInfoHolder> pair = MethodInfoCache.getMethodInfo(method);
+            Pair<CacheKeyHolder, MethodInfoHolder> pair = MethodInfoUtil.getMethodInfo(method);
             CacheKeyHolder holder = pair.getLeft();
 
             if (holder.isMulti()) {
-                Map[] keyIdPair = KeyComposeUtil.toMultiKey(holder, invalidate.separator(), pjp.getArgs());
+                Map[] keyIdPair = KeysCombineUtil.toMultiKey(holder, invalidate.separator(), pjp.getArgs());
                 Set<String> keys = ((Map<String, Object>) keyIdPair[1]).keySet();
                 cacheManager.remove(invalidate.cache(), keys.toArray(new String[keys.size()]));
 
                 LOGGER.info("multi cache clear, keys: {}", keys);
 
             } else {
-                String key = KeyComposeUtil.toSingleKey(pair.getLeft(), invalidate.separator(), pjp.getArgs());
+                String key = KeysCombineUtil.toSingleKey(pair.getLeft(), invalidate.separator(), pjp.getArgs());
                 cacheManager.remove(invalidate.cache(), key);
 
                 LOGGER.info("single cache clear, key: {}", key);
@@ -147,6 +159,17 @@ public class CacherAspect {
         if (caches.get(DEFAULT) == null) {
             ICache cache = caches.values().iterator().next();
             caches.put(DEFAULT, cache);
+        }
+    }
+
+    @PreDestroy
+    public void tearDown()
+            throws MalformedObjectNameException,
+            MBeanRegistrationException,
+            InstanceNotFoundException {
+
+        if (this.jmxSupport && this.mBeanServer != null) {
+            this.mBeanServer.unregisterMBean(new ObjectName("com.vdian.cacher:name=HitRate"));
         }
     }
 }
