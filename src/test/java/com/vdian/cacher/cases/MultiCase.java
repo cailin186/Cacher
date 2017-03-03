@@ -32,6 +32,8 @@ public class MultiCase extends TestBase {
 
         map = service.returnMap("name", ids, "ok");
         System.out.println(map);
+
+        Thread.sleep(10000000);
     }
 
     @Test

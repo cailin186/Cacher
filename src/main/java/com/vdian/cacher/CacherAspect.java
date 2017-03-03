@@ -4,6 +4,8 @@ import com.google.common.base.Preconditions;
 import com.vdian.cacher.domain.CacheKeyHolder;
 import com.vdian.cacher.domain.MethodInfoHolder;
 import com.vdian.cacher.domain.Pair;
+import com.vdian.cacher.jmx.HitRateRecordMXBean;
+import com.vdian.cacher.jmx.HitRateRecordMXBeanImpl;
 import com.vdian.cacher.manager.CacheManager;
 import com.vdian.cacher.reader.CacheReader;
 import com.vdian.cacher.reader.MultiCacheReader;
@@ -21,6 +23,9 @@ import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
+import javax.management.*;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
@@ -60,6 +65,17 @@ public class CacherAspect {
         this.singleCacheReader = new SingleCacheReader(cacheManager);
         this.multiCacheReader = new MultiCacheReader(cacheManager);
         this.open = open;
+    }
+
+    @PostConstruct
+    public void startUp()
+            throws MalformedObjectNameException,
+            NotCompliantMBeanException,
+            InstanceAlreadyExistsException,
+            MBeanRegistrationException {
+        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+        HitRateRecordMXBean mxBean = new HitRateRecordMXBeanImpl();
+        mBeanServer.registerMBean(mxBean, new ObjectName("com.vdian.cacher:name=HitRate"));
     }
 
     @Around("@annotation(com.vdian.cacher.Cached)")

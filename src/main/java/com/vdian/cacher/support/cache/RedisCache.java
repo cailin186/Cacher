@@ -130,7 +130,7 @@ public class RedisCache implements ICache {
                 for (Map.Entry<byte[], byte[]> entry : keyValueBytes.entrySet()) {
                     pipeline.setex(entry.getKey(), (int) expire, entry.getValue());
                 }
-                pipeline.exec();
+                pipeline.sync();
             }
         } finally {
             if (client != null) {

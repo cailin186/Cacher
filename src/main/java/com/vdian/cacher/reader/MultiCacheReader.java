@@ -1,14 +1,12 @@
 package com.vdian.cacher.reader;
 
 import com.vdian.cacher.Cached;
+import com.vdian.cacher.constant.CacherConstant;
 import com.vdian.cacher.domain.BatchReadResult;
 import com.vdian.cacher.domain.CacheKeyHolder;
 import com.vdian.cacher.domain.MethodInfoHolder;
 import com.vdian.cacher.manager.CacheManager;
-import com.vdian.cacher.utils.KeyComposeUtil;
-import com.vdian.cacher.utils.KeyValueConverts;
-import com.vdian.cacher.utils.ResultMergeUtils;
-import com.vdian.cacher.utils.ResultTranslateUtils;
+import com.vdian.cacher.utils.*;
 import org.aspectj.lang.ProceedingJoinPoint;
 
 import java.lang.reflect.InvocationTargetException;
@@ -16,6 +14,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+
+import static com.vdian.cacher.jmx.HitRateRecordMXBean.HIT_COUNT_MAP;
+import static com.vdian.cacher.jmx.HitRateRecordMXBean.REQUIRE_COUNT_MAP;
 
 /**
  * @author jifang
@@ -30,27 +31,40 @@ public class MultiCacheReader implements CacheReader {
         this.cacheManager = cacheManager;
     }
 
+    private void recordResult(BatchReadResult batchReadResult, String keyPattern) {
+        Set<String> missKeys = batchReadResult.getMissKeys();
+
+        int hitCount = batchReadResult.getHitKeyValueMap().size();
+        int totalCount = hitCount + missKeys.size();
+
+        HIT_COUNT_MAP.get(CacherConstant.TOTAL_KEY).addAndGet(hitCount);
+        HIT_COUNT_MAP.get(keyPattern).addAndGet(hitCount);
+
+        REQUIRE_COUNT_MAP.get(CacherConstant.TOTAL_KEY).addAndGet(totalCount);
+        REQUIRE_COUNT_MAP.get(keyPattern).addAndGet(totalCount);
+
+        LOGGER.info("multi cache hit rate: {}/{}, missed keys: {}",
+                hitCount, totalCount, missKeys);
+    }
+
     @Override
-    public Object read(CacheKeyHolder rule, Cached cached, ProceedingJoinPoint pjp, MethodInfoHolder ret) throws Throwable {
+    public Object read(CacheKeyHolder holder, Cached cached, ProceedingJoinPoint pjp, MethodInfoHolder ret) throws Throwable {
 
         // compose keys
-        Map[] pair = KeyComposeUtil.toMultiKey(rule, cached.separator(), pjp.getArgs());
+        Map[] pair = KeyComposeUtil.toMultiKey(holder, cached.separator(), pjp.getArgs());
+        String keyPattern = KeyPatternCache.getKeyPattern(holder, cached.separator());
 
         Map<String, Object> keyIdMap = pair[1];
 
         // request cache
         Set<String> keys = keyIdMap.keySet();
         BatchReadResult batchReadResult = cacheManager.readBatch(cached.cache(), keys);
-        Set<String> missedKeys = batchReadResult.getMissKeys();
-        LOGGER.info("multi cache hit rate: {}/{}, missed keys: {}",
-                keys.size() - missedKeys.size(),
-                keys.size(),
-                missedKeys);
+        recordResult(batchReadResult, keyPattern);
 
         Object result;
         // have miss keys : part hit || all not hit
-        if (missedKeys.size() > 0) {
-            result = handlePartHit(pjp, batchReadResult, rule, ret, cached, pair);
+        if (batchReadResult.getMissKeys().size() > 0) {
+            result = handlePartHit(pjp, batchReadResult, holder, ret, cached, pair);
         }
         // no miss keys : all hits || empty key
         else {

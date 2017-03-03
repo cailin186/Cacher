@@ -22,7 +22,7 @@ public class UserServiceImpl implements UserService {
      * multi
      ***/
     @Override
-    @Cached(cache = "redis", prefix = "prefix", expire = Expire.FOREVER)
+    @Cached(cache = "redis", prefix = "pix", expire = Expire.FIVE_MIN)
     public Map<Integer, User> returnMap(@CacheKey(prefix = "app:") String app, @CacheKey(prefix = "id:", multi = true) List<Integer> ids, Object noKey) {
         System.out.println("method: " + ids);
         Map<Integer, User> map = new TreeMap<>();
@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
         System.out.println("method:" + ids);
     }
 
-    @Cached(cache = "redis")
+    @Cached(cache = "redis", prefix = "prefix")
     public User singleKey(@CacheKey(prefix = "id:") int id, String name, Object non) {
         return new User(id, name, new Date(), 1, "山东-德州");
     }

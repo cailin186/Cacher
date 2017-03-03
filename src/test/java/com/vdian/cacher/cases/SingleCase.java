@@ -16,10 +16,12 @@ public class SingleCase extends TestBase {
     private UserService service;
 
     @Test
-    public void testSingleKey() {
+    public void testSingleKey() throws InterruptedException {
         int id = 1;
         User user = service.singleKey(id, "ff-no-key", "no-key");
         user = service.singleKey(id, "ff-no-key", "ls");
+
+        Thread.sleep(10000000);
     }
 
     @Test
