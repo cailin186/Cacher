@@ -66,6 +66,15 @@
     - fix Single Cache clean bug
 
 ---
+### 0.4.X
+- 0.4.0
+    - 添加JMX支持(默认开启), 可以详细的查看缓存命中情况, 便于缓存优化, 提升系统吞吐:
+        - 支持查看/重置**全部**key命中率
+        - 支持查看/重置**分组**key命中率
+- 0.4.1
+    - fix 通用Redis mset 调用`exec()` bug, 改为`sync()`
+    
+---
 ## 引入
 - 在没有像cacher、spring-cache这类工具的时候, 我们想要在项目中引入缓存提高系统性能/吞吐量往往需要做一下步骤(具体到一个方法实现):
     1. 首先根据参数拼装出一个缓存Key, 查询缓存(可以是Redis、Memcached、EhCache之类的专业缓存服务, 也可以是Guava、HashTable等本地缓存实现);
