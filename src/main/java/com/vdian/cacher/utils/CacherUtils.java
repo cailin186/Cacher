@@ -170,16 +170,17 @@ public class CacherUtils {
             @Override
             public Object intercept(Invocation invocation) throws Throwable {
                 Object result = invocation.proceed();
-                if (StringUtils.equals(invocation.getMethod().getName(), "get")
-                        && result == null) {
+                // first check
+                if (needInit(result, invocation)) {
+                    // lock
                     synchronized (this) {
-                        result = new AtomicLong(0);
-                        String key = (String) invocation.getArguments()[0];
-                        map.put(key, (AtomicLong) result);
+                        // second check make sure init once!
+                        if (needInit((invocation.proceed()), invocation)) {
+                            result = new AtomicLong(0);
+                            String key = (String) invocation.getArguments()[0]; //
+                            map.put(key, (AtomicLong) result);
+                        }
                     }
-                } else if (StringUtils.equals(invocation.getMethod().getName(), "remove")
-                        && result == null) {
-                    result = new AtomicLong(0);
                 }
 
                 return result;
@@ -187,5 +188,10 @@ public class CacherUtils {
         }, new Class[]{Map.class});
 
         return (Map<String, AtomicLong>) proxyMap;
+    }
+
+    private static boolean needInit(Object result, Invocation invocation) {
+        return result == null &&
+                StringUtils.equals(invocation.getMethod().getName(), "get");
     }
 }
