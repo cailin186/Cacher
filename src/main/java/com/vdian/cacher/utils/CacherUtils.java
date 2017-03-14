@@ -170,17 +170,10 @@ public class CacherUtils {
             @Override
             public Object intercept(Invocation invocation) throws Throwable {
                 Object result = invocation.proceed();
-                // first check
                 if (needInit(result, invocation)) {
-                    // lock
-                    synchronized (this) {
-                        // second check make sure init once!
-                        if (needInit((invocation.proceed()), invocation)) {
-                            result = new AtomicLong(0);
-                            String key = (String) invocation.getArguments()[0]; //
-                            map.put(key, (AtomicLong) result);
-                        }
-                    }
+                    result = new AtomicLong(0);
+                    String key = (String) invocation.getArguments()[0]; //
+                    map.put(key, (AtomicLong) result);
                 }
 
                 return result;
