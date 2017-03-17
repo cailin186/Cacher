@@ -73,7 +73,23 @@
         - 支持查看/重置**分组**key命中率
 - 0.4.1
     - fix 通用Redis mset 调用`exec()` bug, 改为`sync()`
-    
+
+---
+### 0.5.X(设计 & 开发ing)
+- 0.5.0
+    - Cacher所有配置抽取为`Configurator`
+    - Cacher代码整理/解耦, 自定义IoC容器: 使`@Singleton`, `@Inject`生效
+    - 定义Recorder接口, 抽象命中率统计
+        - 实现基于ZooKeeper的命中率统计(以应用为单位, 重启历史数据不丢失)
+        - 实现基于LevelDB的命中率统计(以机器为单位, 重启历史数据不丢失)
+        - 实现基于ConcurrentHashMap的命中率统计(以及其为单位, 重启历史数据丢失)
+    - 消除限制4:
+        - 提供以Map的`keySet`作为Multi的CacheKey参数支持.
+    - 消除限制5:
+        - 提供对`java.util.Collections.EmptyList`、`java.util.Collections.EmptyMap`等作为参数/返回值的支持(设计ing)
+        - 提供对`java.util.Collections.CheckedList`、`java.util.Collections.CheckedMap`等作为参数/返回值的支持(设计ing)
+        - 提供对`java.util.Collections.SingletonList`、`java.util.Collections.SingletonMap`等作为参数/返回值的支持(设计ing)
+
 ---
 ## 引入
 - 在没有像cacher、spring-cache这类工具的时候, 我们想要在项目中引入缓存提高系统性能/吞吐量往往需要做一下步骤(具体到一个方法实现):
