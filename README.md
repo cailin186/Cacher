@@ -84,6 +84,7 @@
         - 提供对`java.util.Collections.EmptyList`、`java.util.Collections.EmptyMap`等作为参数/返回值的支持(设计ing)
         - 提供对`java.util.Collections.CheckedList`、`java.util.Collections.CheckedMap`等作为参数/返回值的支持(设计ing)
         - 提供对`java.util.Collections.SingletonList`、`java.util.Collections.SingletonMap`等作为参数/返回值的支持(设计ing)
+    - 添加`com.vdian.cacher.support.cache.RedisClusterCache`, 提供对RedisCluster模式的支持.
 
 ---
 ### 0.6.X(todo)
