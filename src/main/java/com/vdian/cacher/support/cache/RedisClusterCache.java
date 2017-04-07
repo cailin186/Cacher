@@ -32,7 +32,7 @@ public class RedisClusterCache implements ICache {
     private AtomicInteger count = new AtomicInteger(0);
 
     /**
-     * @param connectString   like 10.1.101.60:2181,10.1.101.60:2182,10.1.101.60:2183
+     * @param connectString   like 127.0.0.1:6379,127.0.0.1:6380,127.0.0.1:6381
      * @param maxTotal
      * @param waitMillis
      * @param timeout
@@ -53,6 +53,15 @@ public class RedisClusterCache implements ICache {
 
         this.jedisCluster = new JedisCluster(nodes, timeout, maxRedirections, config);
         this.serializer = serializer;
+
+        if (Runtime.getRuntime().availableProcessors() >= 4) {
+            this.executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
+                @Override
+                public Thread newThread(Runnable r) {
+                    return new Thread(r, "redis-multi-thread-" + count.getAndIncrement());
+                }
+            });
+        }
     }
 
     @Override
@@ -80,14 +89,8 @@ public class RedisClusterCache implements ICache {
             return singleKeyMGet(keys);
         }
 
-        Map<String, JedisPool> clusterNodes = jedisCluster.getClusterNodes();
-        if (clusterNodes.size() <= 3) {
-            return clusterNodesMGet(keys, clusterNodes.values());
-        }
-
-        int availableProcessors = Runtime.getRuntime().availableProcessors();
-        if (availableProcessors >= 4) {
-            return multiThreadsMGet(keys, availableProcessors);
+        if (executor != null) {
+            return multiThreadsMGet(keys);
         }
 
         return singleThreadMGet(keys);
@@ -98,38 +101,11 @@ public class RedisClusterCache implements ICache {
         return SerializeUtils.toObjectMap(key, bytesValues, this.serializer);
     }
 
-    private Map<String, Object> clusterNodesMGet(Collection<String> keys, Collection<JedisPool> nodePools) {
-        byte[][] keyBytes = SerializeUtils.toByteArray(keys);
-
-        // single node mget
-        List<List<byte[]>> mGetBytesList = new ArrayList<>(nodePools.size());
-        for (JedisPool node : nodePools) {
-            try (Jedis jedis = node.getResource()) {
-                mGetBytesList.add(jedis.mget(keyBytes));
-            }
-        }
-
-        // merge
-        Map<String, Object> result = new HashMap<>(keys.size());
-        for (List<byte[]> mGetBytes : mGetBytesList) {
-
-            int index = 0;
-            for (String key : keys) {
-                Object value = serializer.deserialize(mGetBytes.get(index++));
-                if (value != null) {
-                    result.put(key, value);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private Map<String, Object> multiThreadsMGet(Collection<String> keys, int availableProcessors) {
+    private Map<String, Object> multiThreadsMGet(Collection<String> keys) {
         List<Future<Object>> futures = new ArrayList<>(keys.size());
         for (final String key : keys) {
             futures.add(
-                    getExecutor(availableProcessors).submit(new Callable<Object>() {
+                    executor.submit(new Callable<Object>() {
 
                         @Override
                         public Object call() throws Exception {
@@ -173,13 +149,12 @@ public class RedisClusterCache implements ICache {
             return;
         }
 
-        int availableProcessors = Runtime.getRuntime().availableProcessors();
-        if (availableProcessors >= 4) {
-            multiThreadsMSet(keyValueMap, expire, availableProcessors);
+        if (executor != null) {
+            multiThreadsMSet(keyValueMap, expire);
             return;
         }
 
-        singleMSet(keyValueMap, expire);
+        singleThreadMSet(keyValueMap, expire);
     }
 
     private void singleKeyValueMSet(Map<String, Object> keyValue, long expire) {
@@ -193,10 +168,10 @@ public class RedisClusterCache implements ICache {
         }
     }
 
-    private void multiThreadsMSet(Map<String, Object> keyValueMap, final long expire, int availableProcessors) {
+    private void multiThreadsMSet(Map<String, Object> keyValueMap, final long expire) {
         final CountDownLatch latch = new CountDownLatch(keyValueMap.size());
         for (final Map.Entry<String, Object> entry : keyValueMap.entrySet()) {
-            getExecutor(availableProcessors).execute(new Runnable() {
+            executor.execute(new Runnable() {
                 @Override
                 public void run() {
                     write(entry.getKey(), entry.getValue(), expire);
@@ -212,7 +187,7 @@ public class RedisClusterCache implements ICache {
         }
     }
 
-    private void singleMSet(Map<String, Object> keyValueMap, long expire) {
+    private void singleThreadMSet(Map<String, Object> keyValueMap, long expire) {
         for (Map.Entry<String, Object> entry : keyValueMap.entrySet()) {
             write(entry.getKey(), entry.getValue(), expire);
         }
@@ -229,19 +204,18 @@ public class RedisClusterCache implements ICache {
             return;
         }
 
-        int availableProcessors = Runtime.getRuntime().availableProcessors();
-        if (availableProcessors >= 4) {
-            multiThreadsDel(availableProcessors, keys);
+        if (executor != null) {
+            multiThreadsDel(keys);
             return;
         }
 
         singleThreadDel(keys);
     }
 
-    private void multiThreadsDel(int availableProcessors, String... keys) {
+    private void multiThreadsDel(String... keys) {
         final CountDownLatch latch = new CountDownLatch(keys.length);
         for (final String key : keys) {
-            getExecutor(availableProcessors).execute(new Runnable() {
+            executor.execute(new Runnable() {
                 @Override
                 public void run() {
                     jedisCluster.del(key);
@@ -270,23 +244,5 @@ public class RedisClusterCache implements ICache {
         if (this.executor != null) {
             this.executor.shutdown();
         }
-    }
-
-    private ExecutorService getExecutor(int availableProcessors) {
-        if (executor == null) {
-            synchronized (this) {
-                // double check
-                if (executor == null) {
-                    executor = Executors.newFixedThreadPool(availableProcessors, new ThreadFactory() {
-                        @Override
-                        public Thread newThread(Runnable r) {
-                            return new Thread(r, "redis-multi-thread-" + count.getAndIncrement());
-                        }
-                    });
-                }
-            }
-        }
-
-        return executor;
     }
 }

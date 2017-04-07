@@ -1,8 +1,6 @@
 package com.vdian.cacher.utils;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author jifang
@@ -15,7 +13,16 @@ public class ResultMergeUtils {
                                Map idValueMap, Map<String, Object> keyValueMap)
             throws IllegalAccessException, InstantiationException {
 
-        Map mergedMap = (Map) returnType.newInstance();
+        //Arrays.asList()
+        Map mergedMap = null;
+        try {
+            if (returnType == Class.forName("java.util.Collections.EmptyMap")) {
+                mergedMap = new HashMap();
+            }
+
+                mergedMap = (Map) returnType.newInstance();
+        } catch (ClassNotFoundException e) {
+        }
 
         // keep maps order
         for (Map.Entry<String, Object> keyIdEntry : keyIdMap.entrySet()) {

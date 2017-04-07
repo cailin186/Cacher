@@ -93,6 +93,7 @@ public class MultiCacheReader implements CacheReader {
         if (proceed != null) {
             Class<?> returnType = proceed.getClass();
             ret.setType(returnType);
+            // 兼容各种内部类
 
             if (Map.class.isAssignableFrom(returnType)) {
                 Map proceedIdValueMap = (Map) proceed;
@@ -128,7 +129,7 @@ public class MultiCacheReader implements CacheReader {
         Object result;
         Class<?> returnType = ret.getType();
 
-        // when method return type not cached. case: full hit when system restart
+        // when method return type not cached. case: full hit when application restart
         if (returnType == null) {
             result = pjp.proceed();
             // catch return type for next time
