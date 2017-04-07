@@ -99,12 +99,12 @@ public class VRedisClusterCache implements ICache {
     @Override
     public void write(Map<String, Object> keyValueMap, long expire) {
         if (expire == FOREVER && keyValueMap.size() >= REDIS_CLUSTER_LIMIT) {
-            List<Map<byte[], byte[]>> maps = CacherUtils.mapSerializeWithPartition(keyValueMap, REDIS_CLUSTER_LIMIT - 1, serializer);
+            List<Map<byte[], byte[]>> maps = CacherUtils.toByteMap(keyValueMap, REDIS_CLUSTER_LIMIT - 1, serializer);
             for (Map<byte[], byte[]> map : maps) {
                 clusterClient.msetnxBytes(map);
             }
         } else {
-            Map<byte[], byte[]> bytesMap = CacherUtils.mapSerialize(keyValueMap, serializer);
+            Map<byte[], byte[]> bytesMap = CacherUtils.toByteMap(keyValueMap, serializer);
 
             if (expire == FOREVER) {
                 clusterClient.msetBytes(bytesMap);

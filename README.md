@@ -1,12 +1,12 @@
-# Cacher 缓存注解框架(0.3版本)
+# Cacher 缓存注解框架(0.5版本)
 
 标签 ： 开源
 
 ---
 
-> - 服务于feedcenter的***redisCli-annotation***.
-    - 每天提供200W+次Dubbo调用, 2.6亿+次缓存查询, 可以做到单次查询(get/mget)耗时 0~2ms(1~200个key).
-    - 0.1版本重新设计&开发, 不再与某一具体缓存服务绑定, 提供更灵活的配置、更快的读写效率.
+> - 服务于feedcenter的***redisCli-annotation***:
+    1. 每天提供200W+次Dubbo调用, 2.6亿+次缓存查询, 可以做到单次查询(get/mget)耗时 0~2ms(1~200个key).
+    2. 0.1版本重新设计&开发, 不再与某一具体缓存服务绑定, 提供更灵活的配置、更快的读写效率.
 
 ---
 
@@ -77,18 +77,21 @@
 ---
 ### 0.5.X(设计 & 开发ing)
 - 0.5.0
-    - Cacher所有配置抽取为`Configurator`
     - Cacher代码整理/解耦, 自定义IoC容器: 使`@Singleton`, `@Inject`生效
-    - 定义Recorder接口, 抽象命中率统计
-        - 实现基于ZooKeeper的命中率统计(以应用为单位, 重启历史数据不丢失)
-        - 实现基于LevelDB的命中率统计(以机器为单位, 重启历史数据不丢失)
-        - 实现基于ConcurrentHashMap的命中率统计(以及其为单位, 重启历史数据丢失)
     - 消除限制4:
         - 提供以Map的`keySet`作为Multi的CacheKey参数支持.
     - 消除限制5:
         - 提供对`java.util.Collections.EmptyList`、`java.util.Collections.EmptyMap`等作为参数/返回值的支持(设计ing)
         - 提供对`java.util.Collections.CheckedList`、`java.util.Collections.CheckedMap`等作为参数/返回值的支持(设计ing)
         - 提供对`java.util.Collections.SingletonList`、`java.util.Collections.SingletonMap`等作为参数/返回值的支持(设计ing)
+
+---
+### 0.6.X(todo)
+- Cacher所有配置抽取为`Configurator`
+- 定义Recorder接口, 抽象命中率统计
+    - 实现基于ZooKeeper的命中率统计(以应用为单位, 重启历史数据不丢失)
+    - 实现基于LevelDB的命中率统计(以机器为单位, 重启历史数据不丢失)
+    - 实现基于ConcurrentHashMap的命中率统计(以及其为单位, 重启历史数据丢失)
 
 ---
 ## 引入
@@ -259,7 +262,7 @@ public List<User> getFromDBOrHttp(List<Integer> ids, String address) {
             <constructor-arg name="namespace" value="feedcenter_cluster"/>
         </bean>
     -->
-    <bean id="redisCache" class="com.vdian.cacher.support.cache.RedisCache">
+    <bean id="redisCache" class="com.vdian.cacher.support.cache.RedisPoolCache">
         <constructor-arg name="host" value="10.1.101.60"/>
         <constructor-arg name="port" value="6379"/>
     </bean>

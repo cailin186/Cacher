@@ -1,6 +1,8 @@
 package com.vdian.cacher.reader;
 
 import com.vdian.cacher.Cached;
+import com.vdian.cacher.config.Inject;
+import com.vdian.cacher.config.Singleton;
 import com.vdian.cacher.constant.Constant;
 import com.vdian.cacher.domain.BatchReadResult;
 import com.vdian.cacher.domain.CacheKeyHolder;
@@ -22,14 +24,12 @@ import static com.vdian.cacher.jmx.RecordMXBean.REQUIRE_COUNT_MAP;
  * @author jifang
  * @since 2016/11/5 下午3:11.
  */
+@Singleton
 @SuppressWarnings("unchecked")
 public class MultiCacheReader implements CacheReader {
 
+    @Inject
     private CacheManager cacheManager;
-
-    public MultiCacheReader(CacheManager cacheManager) {
-        this.cacheManager = cacheManager;
-    }
 
     @Override
     public Object read(CacheKeyHolder holder, Cached cached, ProceedingJoinPoint pjp, MethodInfoHolder ret) throws Throwable {

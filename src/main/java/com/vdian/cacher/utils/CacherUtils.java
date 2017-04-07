@@ -44,7 +44,7 @@ public class CacherUtils {
         return method;
     }
 
-    public static Object getExpressionValue(String spEL, Object outerValue) {
+    static Object getExpressionValue(String spEL, Object outerValue) {
         Object innerValue;
         if (!Strings.isNullOrEmpty(spEL)) {
             innerValue = parser.parseExpression(spEL).getValue(outerValue);
@@ -54,53 +54,7 @@ public class CacherUtils {
         return innerValue;
     }
 
-    public static byte[][] toByteArray(Collection<String> strings) {
-        byte[][] array = new byte[strings.size()][];
-        int index = 0;
-        for (String str : strings) {
-            array[index++] = str.getBytes();
-        }
-        return array;
-    }
-
-    public static Map<byte[], byte[]> mapSerialize(Map<String, Object> keyValues, IObjectSerializer serializer) {
-        Map<byte[], byte[]> keyValueBytes = new HashMap<>(keyValues.size());
-        for (Map.Entry<String, Object> entry : keyValues.entrySet()) {
-
-            byte[] keyBytes = entry.getKey().getBytes();
-            byte[] valueBytes = serializer.serialize(entry.getValue());
-
-            keyValueBytes.put(keyBytes, valueBytes);
-        }
-        return keyValueBytes;
-    }
-
-    public static List<Map<byte[], byte[]>> mapSerializeWithPartition(Map<String, Object> keyValues, int limit, IObjectSerializer serializer) {
-        List<Map<byte[], byte[]>> maps = new LinkedList<>();
-
-        int count = 0;
-        Map<byte[], byte[]> keyValueBytes = new HashMap<>(limit);
-        for (Map.Entry<String, Object> entry : keyValues.entrySet()) {
-
-            byte[] keyBytes = entry.getKey().getBytes();
-            byte[] valueBytes = serializer.serialize(entry.getValue());
-            keyValueBytes.put(keyBytes, valueBytes);
-            ++count;
-
-            if (count == limit) {
-                count = 0;
-                maps.add(keyValueBytes);
-                keyValueBytes = new HashMap<>(limit);
-            }
-        }
-        if (count != 0) {
-            maps.add(keyValueBytes);
-        }
-
-        return maps;
-    }
-
-    public static String[] getMethodVariableMap(Method method) {
+    static String[] getMethodVariableMap(Method method) {
 
         CtMethod ctMethod = getCtMethod(method);
 
@@ -147,7 +101,7 @@ public class CacherUtils {
     }
 
 
-    public static StringBuilder appendSeparator(StringBuilder sb, String separator, String totalPrefix, int index) {
+    static StringBuilder appendSeparator(StringBuilder sb, String separator, String totalPrefix, int index) {
         // append key separator (like : "-")
         if (!Strings.isNullOrEmpty(separator)) {
             if (!Strings.isNullOrEmpty(totalPrefix) || index != 0) {

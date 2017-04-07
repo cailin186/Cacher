@@ -5,6 +5,7 @@ import com.vdian.cacher.enums.Expire;
 import com.vdian.cacher.exception.CacherException;
 import com.vdian.cacher.support.serialize.Hessian2Serializer;
 import com.vdian.cacher.IObjectSerializer;
+import com.vdian.cacher.utils.SerializeUtils;
 import net.rubyeye.xmemcached.MemcachedClient;
 import net.rubyeye.xmemcached.XMemcachedClientBuilder;
 import net.rubyeye.xmemcached.exception.MemcachedException;

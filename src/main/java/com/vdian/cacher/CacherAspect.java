@@ -1,6 +1,9 @@
 package com.vdian.cacher;
 
 import com.google.common.base.Preconditions;
+import com.vdian.cacher.config.Inject;
+import com.vdian.cacher.config.Singleton;
+import com.vdian.cacher.constant.Constant;
 import com.vdian.cacher.domain.CacheKeyHolder;
 import com.vdian.cacher.domain.MethodInfoHolder;
 import com.vdian.cacher.domain.Pair;
@@ -8,13 +11,8 @@ import com.vdian.cacher.jmx.RecordMXBean;
 import com.vdian.cacher.jmx.RecordMXBeanImpl;
 import com.vdian.cacher.manager.CacheManager;
 import com.vdian.cacher.reader.CacheReader;
-import com.vdian.cacher.reader.MultiCacheReader;
-import com.vdian.cacher.reader.SingleCacheReader;
 import com.vdian.cacher.support.cache.NoOpCache;
-import com.vdian.cacher.utils.CacherSwitcher;
-import com.vdian.cacher.utils.CacherUtils;
-import com.vdian.cacher.utils.KeysCombineUtil;
-import com.vdian.cacher.utils.MethodInfoUtil;
+import com.vdian.cacher.utils.*;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.After;
@@ -26,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.management.*;
-import java.lang.management.ManagementFactory;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
@@ -37,6 +35,7 @@ import java.util.Set;
  * @since 2016/11/2 下午2:34.
  */
 @Aspect
+@Singleton
 @SuppressWarnings("unchecked")
 public class CacherAspect {
 
@@ -44,17 +43,23 @@ public class CacherAspect {
 
     private static final String DEFAULT = "default";
 
+    @Inject
     private CacheReader singleCacheReader;
 
+    @Inject
     private CacheReader multiCacheReader;
 
+    @Inject
     private CacheManager cacheManager;
+
+    @Inject
+    private MBeanServer mBeanServer;
 
     private volatile boolean open;
 
     private volatile boolean jmxSupport;
 
-    private MBeanServer mBeanServer;
+    private volatile Map<String, ICache> caches;
 
     public CacherAspect() {
         this(Collections.singletonMap(DEFAULT, (ICache) new NoOpCache()));
@@ -69,10 +74,7 @@ public class CacherAspect {
     }
 
     public CacherAspect(Map<String, ICache> caches, boolean open, boolean jmxSupport) {
-        initCaches(caches);
-        this.cacheManager = new CacheManager(caches);
-        this.singleCacheReader = new SingleCacheReader(cacheManager);
-        this.multiCacheReader = new MultiCacheReader(cacheManager);
+        this.caches = initCaches(caches);
         this.open = open;
         this.jmxSupport = jmxSupport;
     }
@@ -82,10 +84,12 @@ public class CacherAspect {
             throws MalformedObjectNameException,
             NotCompliantMBeanException,
             InstanceAlreadyExistsException,
-            MBeanRegistrationException {
+            MBeanRegistrationException, IOException {
+        CacherInitUtil.beanInit(Constant.CACHER_BASE_PACKAGE, this);
+        this.cacheManager.setICachePool(this.caches);
+
         if (this.jmxSupport) {
-            mBeanServer = ManagementFactory.getPlatformMBeanServer();
-            RecordMXBean mxBean = new RecordMXBeanImpl();
+            RecordMXBean mxBean = CacherInitUtil.getBeanInstance(RecordMXBeanImpl.class);
             mBeanServer.registerMBean(mxBean, new ObjectName("com.vdian.cacher:name=HitRate"));
         }
     }
@@ -153,13 +157,15 @@ public class CacherAspect {
         this.open = open;
     }
 
-    private void initCaches(Map<String, ICache> caches) {
+    private Map<String, ICache> initCaches(Map<String, ICache> caches) {
         Preconditions.checkArgument(!caches.isEmpty(), "at least one ICache implement");
 
         if (caches.get(DEFAULT) == null) {
             ICache cache = caches.values().iterator().next();
             caches.put(DEFAULT, cache);
         }
+
+        return caches;
     }
 
     @PreDestroy

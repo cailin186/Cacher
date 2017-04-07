@@ -21,17 +21,17 @@
         <constructor-arg name="open" value="true"/>
         <constructor-arg name="caches">
             <map key-type="java.lang.String" value-type="com.vdian.cacher.ICache">
-                <entry key="noOp" value-ref="noOpCache"/>
-                <entry key="jdkMap" value-ref="jdkConcurrentMapCache"/>
-                <entry key="guava" value-ref="guavaCache"/>
-                <entry key="mapDB" value-ref="mapDBCache"/>
-                <entry key="ehcache" value-ref="ehCache"/>
+                <!--<entry key="noOp" value-ref="noOpCache"/>-->
+                <!--<entry key="jdkMap" value-ref="jdkConcurrentMapCache"/>-->
+                <!--<entry key="guava" value-ref="guavaCache"/>-->
+                <!--<entry key="mapDB" value-ref="mapDBCache"/>-->
+                <!--<entry key="ehcache" value-ref="ehCache"/>-->
                 <!--
                     <entry key="vRedisPool" value-ref="vRedisPoolCache"/>
                     <entry key="vRedisCluster" value-ref="vRedisClusterCache"/>
                 -->
                 <entry key="redis" value-ref="redisCache"/>
-                <entry key="memcached" value-ref="memcachedCache"/>
+                <!--<entry key="memcached" value-ref="memcachedCache"/>-->
             </map>
         </constructor-arg>
     </bean>
@@ -72,9 +72,15 @@
             <constructor-arg name="namespace" value="feedcenter_cluster"/>
         </bean>
     -->
-    <bean id="redisCache" class="com.vdian.cacher.support.cache.RedisCache">
-        <constructor-arg name="host" value="10.1.101.60"/>
-        <constructor-arg name="port" value="6379"/>
+    <bean id="redisCache" class="com.vdian.cacher.support.cache.RedisClusterCache">
+        <constructor-arg name="connectString" value="10.1.101.60:6379,10.1.101.60:6380,10.1.101.60:6381"/>
+        <constructor-arg name="maxRedirections" value="3"/>
+        <constructor-arg name="maxTotal" value="3"/>
+        <constructor-arg name="serializer">
+            <bean class="com.vdian.cacher.support.serialize.Hessian2Serializer"/>
+        </constructor-arg>
+        <constructor-arg name="timeout" value="200"/>
+        <constructor-arg name="waitMillis" value="20"/>
     </bean>
     <bean id="memcachedCache" class="com.vdian.cacher.support.cache.MemcachedCache">
         <constructor-arg name="ipPorts" value="10.1.101.60:11211"/>

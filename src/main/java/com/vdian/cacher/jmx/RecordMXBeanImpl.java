@@ -1,5 +1,6 @@
 package com.vdian.cacher.jmx;
 
+import com.vdian.cacher.config.Singleton;
 import com.vdian.cacher.constant.Constant;
 import org.apache.commons.lang3.StringUtils;
 
@@ -14,6 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author jifang
  * @since 2017/3/2 下午2:28.
  */
+@Singleton
 public class RecordMXBeanImpl extends NotificationBroadcasterSupport implements RecordMXBean {
 
     private long seq = 0;

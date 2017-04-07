@@ -7,4 +7,6 @@ package com.vdian.cacher.constant;
 public interface Constant {
 
     String TOTAL_KEY = "CacherTotalStatistics";
+
+    String CACHER_BASE_PACKAGE = "com.vdian.cacher";
 }
